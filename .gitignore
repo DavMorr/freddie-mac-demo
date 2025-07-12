@@ -92,6 +92,7 @@ INSTALL-*.md
 *.old
 *.orig
 *.save
+.gitignore.backup*
 
 # Module & Directory Backups
 **/openrisk_navigator.backup
