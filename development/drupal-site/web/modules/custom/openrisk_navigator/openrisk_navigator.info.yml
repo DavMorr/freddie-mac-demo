@@ -1,0 +1,20 @@
+name: 'OpenRisk Navigator'
+type: module
+description: 'A Drupal 11-based open-source platform for analyzing mortgage loan performance data, enriched by AI features including semantic search, summarization, and risk tagging—optimized for public sector, academic, and nonprofit use.'
+package: Custom
+core_version_requirement: ^10 || ^11
+dependencies:
+  - ai
+  - ai_agents
+  - ai_provider_openai
+  - consumers:consumers
+  - drupal:field_ui
+  - key
+  - markdown_easy
+  - drupal:migrate
+  - migrate_tools
+  - unstructured
+  - drupal:jsonapi
+  - drupal:serialization
+  - simple_oauth
+  - simple_oauth:simple_oauth_static_scope
