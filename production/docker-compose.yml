@@ -1,0 +1,138 @@
+# Freddie Mac OpenRisk Navigator - Production Environment (FIXED PERMISSIONS)
+# Fixed read-only volume mount issues that were blocking Composer
+
+services:
+  # React Frontend
+  nginx-react:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: freddie-mac-nginx-react
+    ports:
+      - "8080:80"
+    depends_on:
+      - react
+    networks:
+      - freddie-mac-network
+    restart: unless-stopped
+
+  # Drupal Backend Nginx
+  nginx-drupal:
+    build:
+      context: ./docker/nginx-drupal
+      dockerfile: Dockerfile
+    container_name: freddie-mac-nginx-drupal
+    ports:
+      - "8081:80"
+    volumes:
+      # NO VENDOR MOUNT - vendor directory is generated in container
+      - ./drupal-site/web:/opt/drupal/web:ro
+      - drupal_files:/opt/drupal/web/sites/default/files:ro
+    depends_on:
+      - drupal
+    networks:
+      - freddie-mac-network
+    restart: unless-stopped
+
+  # React Application
+  react:
+    build: ./react-site
+    container_name: freddie-mac-react
+    volumes:
+      - ./react-site:/app:rw
+      - react_node_modules:/app/node_modules
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=http://localhost:8081
+      - VITE_API_ROOT=http://localhost:8081/jsonapi
+      - VITE_LOANS_API=http://localhost:8081/jsonapi/loan_record/loan_record
+      - VITE_APP_TITLE=Freddie Mac OpenRisk Navigator
+      - VITE_APP_DEBUG=true
+    expose:
+      - "3000"
+    networks:
+      - freddie-mac-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Drupal Application - FIXED VOLUME PERMISSIONS
+  drupal:
+    build: ./drupal-site
+    container_name: freddie-mac-drupal
+    volumes:
+      # ALL MOUNTS NOW READ-WRITE - NO VENDOR MOUNT (generated in container)
+      - ./drupal-site/web:/opt/drupal/web:rw
+      - ./drupal-site/composer.json:/opt/drupal/composer.json:rw
+      - ./drupal-site/composer.lock:/opt/drupal/composer.lock:rw
+      - drupal_files:/opt/drupal/web/sites/default/files
+      - drupal_private:/opt/drupal/private
+    expose:
+      - "9000"
+    environment:
+      - DATABASE_HOST=mysql
+      - DATABASE_NAME=drupal_production
+      - DATABASE_USER=drupal_user
+      - DATABASE_PASSWORD=docker_test_db_pass_2025
+      - DRUPAL_BASE_URL=http://localhost:8081
+      - DRUPAL_HASH_SALT=test_hash_salt_for_docker_deployment_2025_secure_placeholder
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_UPLOAD_MAX_FILESIZE=64M
+      - PHP_POST_MAX_SIZE=64M
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - freddie-mac-network
+    restart: unless-stopped
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: freddie-mac-mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    environment:
+      - MYSQL_ROOT_PASSWORD=docker_test_root_pass_2025
+      - MYSQL_DATABASE=drupal_production
+      - MYSQL_USER=drupal_user
+      - MYSQL_PASSWORD=docker_test_db_pass_2025
+      - MYSQL_INNODB_BUFFER_POOL_SIZE=256M
+      - MYSQL_INNODB_LOG_FILE_SIZE=64M
+      - MYSQL_MAX_CONNECTIONS=100
+    networks:
+      - freddie-mac-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pdocker_test_root_pass_2025"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  freddie-mac-network:
+    driver: bridge
+    name: freddie-mac-network
+
+volumes:
+  mysql_data:
+    driver: local
+    name: freddie-mac-mysql-data
+  drupal_files:
+    driver: local
+    name: freddie-mac-drupal-files
+  drupal_private:
+    driver: local
+    name: freddie-mac-drupal-private
+  react_node_modules:
+    driver: local
+    name: freddie-mac-react-modules

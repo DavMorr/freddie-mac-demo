@@ -1,0 +1,6 @@
+_core:
+  default_config_hash: 4vXw1i9_Ldyd9feoB-4DaPEV1jxcIlShdiyLKrnmWEQ
+ai_provider: openai
+ai_model: gpt-4o
+enable_ai_fallback: true
+default_strategy: moderate_strategy

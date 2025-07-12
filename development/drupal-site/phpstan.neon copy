@@ -1,0 +1,19 @@
+parameters:
+  level: max
+  paths:
+    - web/modules/custom
+  checkMissingIterableValueType: true
+  checkGenericClassInNonGenericObjectType: true
+  reportUnmatchedIgnoredErrors: false
+  checkExplicitMixed: true
+  inferPrivatePropertyTypeFromConstructor: true
+  checkPhpDocMissingThrows: true
+  checkPhpDocMissingReturnType: true
+  checkFunctionNameCase: true
+  checkMissingVarTagType: true
+  checkMissingPropertyTypeHint: true
+  checkMissingIterableValueType: true
+  checkUninitializedProperties: true
+  treatPhpDocTypesAsCertain: false
+  checkClassCaseSensitivity: true
+  checkUnionTypes: true

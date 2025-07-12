@@ -1,0 +1,163 @@
+# ===============================================================================
+# FREDDIE MAC OPENRISK NAVIGATOR - MULTI-ENVIRONMENT PROJECT
+# ===============================================================================
+# Comprehensive .gitignore for development + production environments
+# Each containing Drupal 11 + React 19 subsites
+
+# ===============================================================================
+# DRUPAL SPECIFIC (both environments)
+# ===============================================================================
+# Composer Dependencies
+**/drupal-site/vendor/
+**/drupal-site/web/core/
+**/drupal-site/web/modules/contrib/
+**/drupal-site/web/themes/contrib/
+**/drupal-site/web/profiles/contrib/
+
+# Drupal Files & Directories  
+**/drupal-site/web/sites/*/files/
+**/drupal-site/web/sites/*/private/
+**/drupal-site/web/sites/*/translations/
+**/drupal-site/private/
+
+# Drupal Configuration & Logs
+**/drupal-site/config/sync/
+**/drupal-site/web/sites/*/settings.local.php
+**/drupal-site/drush/
+**/drupal-site/.drush/
+
+# ===============================================================================
+# REACT SPECIFIC (both environments)  
+# ===============================================================================
+# Node Dependencies
+**/react-site/node_modules/
+**/react-site/dist/
+**/react-site/build/
+
+# React Environment Files
+**/react-site/.env
+**/react-site/.env.local
+**/react-site/.env.production.local
+**/react-site/.env.development.local
+
+# Keep Example Files
+!**/.env.example
+
+# React Build & Dev Files
+**/react-site/.next/
+**/react-site/.cache/
+**/react-site/coverage/
+
+# ===============================================================================
+# DDEV SPECIFIC (development environment)
+# ===============================================================================
+# DDEV Generated Files
+development/.ddev/.ddev-docker-compose*
+development/.ddev/.gitignore
+development/.ddev/db_snapshots/
+development/.ddev/.webimageBuild/
+
+# Keep DDEV Configuration
+!development/.ddev/config.yaml
+!development/.ddev/docker-compose.*.yaml
+!development/.ddev/nginx_full/
+!development/.ddev/apache/
+
+# ===============================================================================
+# DOCKER SPECIFIC (production environment)
+# ===============================================================================
+# Docker Runtime Files
+production/.env.local
+production/docker-compose.override.yml
+
+# Keep Main Docker Configuration
+!production/.env
+!production/docker-compose.yml
+
+# ===============================================================================
+# DEVELOPMENT ARTIFACTS (both environments)
+# ===============================================================================
+# Documentation Artifacts
+APPROACH-*.md
+INSTALL-*.md
+
+# Working Directories
+**/_temp/
+
+# Backup Files (User Created)
+*.backup
+*.backup2  
+*.backup3
+*.bak
+*.old
+*.orig
+*.save
+
+# Module & Directory Backups
+**/openrisk_navigator.backup
+drupal-site-backup/
+vendor-backup/
+
+# Cut/Copy/Paste Files
+**/cut
+**/copy  
+**/paste
+
+# ===============================================================================
+# SYSTEM & IDE FILES
+# ===============================================================================
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.buildpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ===============================================================================
+# SECURITY & CREDENTIALS
+# ===============================================================================
+# Sensitive Files
+*.pem
+*.key
+*.crt
+*.p12
+.env.production
+
+# Log Files
+*.log
+logs/
+log/
+
+# ===============================================================================
+# PACKAGE MANAGERS & BUILD TOOLS
+# ===============================================================================
+# NPM
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnpm-debug.log*
+
+# Composer
+composer.phar
+auth.json
+
+# Build Tools
+.eslintcache
+.stylelintcache
+.parcel-cache/

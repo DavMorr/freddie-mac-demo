@@ -1,0 +1,24 @@
+uuid: 5a228928-6351-4102-87dd-c1011a15b775
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: ZYjpRw73p7lfD040A-TOI134gD1oSuzVa1_leRukRkY
+id: loan_record_view
+name: 'loan_record:view'
+description: 'Allows reading of LoanRecord entities via JSON:API or REST.'
+grant_types:
+  refresh_token:
+    status: false
+    description: ''
+  client_credentials:
+    status: true
+    description: 'Allows machine-to-machine access to view LoanRecord entities. Used for server-side integrations and backend clients.'
+  authorization_code:
+    status: false
+    description: ''
+umbrella: false
+parent: _none
+granularity_id: permission
+granularity_configuration:
+  permission: 'view loan_record entities'

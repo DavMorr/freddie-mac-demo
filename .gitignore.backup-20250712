@@ -1,0 +1,343 @@
+# ===============================================================================
+# Freddie Mac OpenRisk Navigator - Git Ignore Configuration
+# ===============================================================================
+# Comprehensive ignore patterns for multi-environment project with Drupal + React
+# Structure: development/ and production/ directories with drupal-site/ and react-site/
+
+# ===============================================================================
+# SYSTEM & IDE FILES
+# ===============================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE Files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.buildpath
+
+# Text Editor Temporary Files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.#*
+#*#
+
+# ===============================================================================
+# DRUPAL SPECIFIC (both development/ and production/)
+# ===============================================================================
+
+# Composer Dependencies
+**/drupal-site/vendor/
+**/drupal-site/composer.lock
+
+# Drupal Core (if managing via Composer)
+**/drupal-site/web/core/
+**/drupal-site/web/modules/contrib/
+**/drupal-site/web/themes/contrib/
+**/drupal-site/web/profiles/contrib/
+
+# Drupal Files & Uploads
+**/drupal-site/web/sites/*/files/
+**/drupal-site/web/sites/*/private/
+**/drupal-site/private/
+
+# Drupal Configuration (local overrides only)
+**/drupal-site/web/sites/*/settings.local.php
+**/drupal-site/web/sites/*/services.local.yml
+
+# Drupal Cache & Temporary
+**/drupal-site/web/sites/*/cache/
+**/drupal-site/web/sites/*/tmp/
+**/drupal-site/tmp/
+**/drupal-site/.tmp/
+
+# Drupal Logs
+**/drupal-site/web/sites/*/logs/
+**/drupal-site/logs/
+
+# ===============================================================================
+# DDEV SPECIFIC (development environment)
+# ===============================================================================
+
+# DDEV Generated Files (keep configuration, ignore generated)
+development/drupal-site/.ddev/.gitignore
+development/drupal-site/.ddev/.docker-compose.full.yml
+development/drupal-site/.ddev/db_snapshots/
+development/drupal-site/.ddev/.dbimageBuild
+development/drupal-site/.ddev/.webimageExtra
+development/drupal-site/.ddev/.dbimageExtra
+development/drupal-site/.ddev/.ddev-docker-compose-full.yaml
+development/drupal-site/.ddev/import.yaml
+development/drupal-site/.ddev/docker-compose.*.yaml
+development/drupal-site/.ddev/commands/web/sequelace*
+development/drupal-site/.ddev/homeadditions/
+development/drupal-site/.ddev/bin/
+
+# ===============================================================================
+# DOCKER SPECIFIC (production environment)
+# ===============================================================================
+
+# Docker Local Override Files
+**/docker-compose.override.yml
+**/docker-compose.local.yml
+
+# Note: Docker named volumes (mysql_data, drupal_files, etc.) are managed
+# internally by Docker and do not create host directories in the project.
+
+# ===============================================================================
+# NODE.JS & REACT SPECIFIC (both environments)
+# ===============================================================================
+
+# Dependencies
+**/react-site/node_modules/
+**/react-site/jspm_packages/
+
+# Build Outputs
+**/react-site/dist/
+**/react-site/build/
+**/react-site/.next/
+**/react-site/out/
+
+# Runtime & Logs
+**/react-site/npm-debug.log*
+**/react-site/yarn-debug.log*
+**/react-site/yarn-error.log*
+**/react-site/lerna-debug.log*
+**/react-site/.pnpm-debug.log*
+
+# Testing & Coverage
+**/react-site/coverage/
+**/react-site/.nyc_output
+**/react-site/.jest-cache/
+
+# Vite Specific
+**/react-site/.vite/
+**/react-site/vite.config.js.timestamp-*
+
+# ESLint Cache
+**/react-site/.eslintcache
+
+# ===============================================================================
+# ENVIRONMENT & CONFIGURATION FILES
+# ===============================================================================
+
+# Docker Environment Files (production root)
+production/.env
+
+# React Environment Files (both environments)
+**/react-site/.env
+**/react-site/.env.local
+**/react-site/.env.development.local
+**/react-site/.env.test.local
+**/react-site/.env.production.local
+**/react-site/.env.bak
+**/react-site/.env.old
+**/react-site/.env.x
+
+# Keep Example Files (these should be tracked)
+!**/.env.example
+!**/.env.sample
+!**/.env.template
+
+# Note: Drupal sites use DDEV/Docker environment variables, not .env files
+
+# Local Configuration Overrides
+**/config.local.js
+**/config.local.json
+**/local.config.*
+
+# ===============================================================================
+# BACKUP & TEMPORARY FILES
+# ===============================================================================
+
+# Backup Files (common patterns)
+*.backup
+*.backup2
+*.bak
+*.old
+*.orig
+*.save
+**/*backup*/
+**/*-backup*/
+
+# Specific Backup Patterns in Project
+development/*backup*
+production/*backup*
+**/README.md.backup*
+**/setup-dev.sh.backup*
+**/Makefile.backup*
+
+# Temporary Directories
+**/tmp/
+**/temp/
+**/_temp/
+**/temporary/
+
+# ===============================================================================
+# LOGS & RUNTIME FILES
+# ===============================================================================
+
+# Application Logs
+*.log
+logs/
+**/*.log
+**/logs/
+
+# Runtime Files
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+**/.npm
+
+# Optional eslint cache
+**/.eslintcache
+
+# ===============================================================================
+# DATABASE & DUMPS
+# ===============================================================================
+
+# Database Dumps
+*.sql
+*.sql.gz
+*.dump
+**/database/
+**/db_backups/
+**/backups/*.sql
+
+# Keep Sample/Example Databases
+!**/sample.sql
+!**/example.sql
+!**/schema.sql
+
+# ===============================================================================
+# SECURITY & SENSITIVE FILES
+# ===============================================================================
+
+# SSH Keys
+*.pem
+*.key
+**/id_rsa
+**/id_dsa
+
+# SSL Certificates
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# GPG Keys
+*.gpg
+*.asc
+
+# ===============================================================================
+# DOCUMENTATION ARTIFACTS
+# ===============================================================================
+
+# Generated Documentation
+**/docs/build/
+**/documentation/build/
+
+# Documentation Backups (keep main docs)
+**/*.md.backup*
+**/*.md.old
+**/*.md.bak
+
+# ===============================================================================
+# TESTING & DEVELOPMENT TOOLS
+# ===============================================================================
+
+# Testing
+**/test-results/
+**/test-reports/
+**/.phpunit.result.cache
+
+# Code Quality Tools
+**/.php_cs.cache
+**/.php-cs-fixer.cache
+
+# Package Manager Locks (include composer.lock but not package-lock.json for React)
+# Drupal: Include composer.lock for reproducible builds
+# React: Exclude package-lock.json as it's typically included
+
+# ===============================================================================
+# PROJECT SPECIFIC EXCLUSIONS
+# ===============================================================================
+
+# Custom Project Temporary Files
+INSTALL-*.md
+APPROACH-*.md
+API-CONFIG-*.md
+REACT-VITE-*.md
+NVM-*.md
+
+# Test Scripts & Validation (keep main scripts, ignore test outputs)
+test-results*
+tests-output*
+validation-*
+
+# Status Files (development artifacts)
+RESTORE-POINT-STATUS.md
+
+# Cut/Paste Artifacts
+cut
+**/cut
+*.textClipping
+
+# ===============================================================================
+# KEEP IMPORTANT FILES (explicit includes)
+# ===============================================================================
+
+# Ensure these are never ignored even if patterns might match
+!.gitkeep
+!.htaccess
+!web.config
+!README.md
+!INSTALL.md
+!CHANGELOG.md
+!LICENSE
+!LICENSE.txt
+!LICENSE.md
+
+# Docker & Container Configuration
+!docker-compose.yml
+!docker-compose.yaml
+!Dockerfile
+!**/Dockerfile*
+!.dockerignore
+
+# DDEV Configuration
+!**/.ddev/config.yaml
+!**/.ddev/config.yml
+
+# Build & Deployment Scripts
+!**/setup-dev.sh
+!**/test-dev.sh
+!**/Makefile
+!**/package.json
+!**/composer.json
+
+# ===============================================================================
+# END OF CONFIGURATION
+# ===============================================================================

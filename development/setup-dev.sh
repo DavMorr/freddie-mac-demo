@@ -1,0 +1,606 @@
+#!/bin/bash
+
+# FREDDIE MAC OPENRISK NAVIGATOR - ENHANCED DEVELOPMENT SETUP
+# Professional development environment with DDEV + Vite + AI Integration
+
+set -e
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+print_status() {
+    echo -e "${BLUE}▶${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}✅${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}❌${NC} $1"
+}
+
+print_info() {
+    echo -e "${CYAN}${NC} $1"
+}
+
+echo "FREDDIE MAC OPENRISK NAVIGATOR - ENHANCED DEVELOPMENT SETUP"
+echo "=============================================================="
+echo ""
+
+# Check if we're in the right directory
+if [ ! -d "drupal-site" ] || [ ! -d "react-site" ]; then
+    print_error "Must be run from the development directory containing drupal-site and react-site"
+    exit 1
+fi
+
+# PHASE 1: Prerequisites & Environment Check
+print_status "Phase 1: Checking prerequisites and environment..."
+
+# Check DDEV availability
+print_status "Checking DDEV availability..."
+if ! command -v ddev &> /dev/null; then
+    print_error "DDEV is not installed. Please install DDEV first: https://ddev.readthedocs.io/"
+    exit 1
+fi
+print_success "DDEV is available"
+
+# Check Node.js version (18+, not 20+)
+print_status "Checking Node.js version..."
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version)
+    print_status "Node.js version: $NODE_VERSION"
+    
+    # Check if version is 18+
+    if [[ "$NODE_VERSION" < "v18" ]]; then
+        print_error "Node.js $NODE_VERSION detected. This application requires Node.js 18+"
+        
+        # Detect nvm availability and provide appropriate upgrade instructions
+        print_status "Checking upgrade options..."
+        
+        # Check multiple nvm locations
+        if command -v nvm &> /dev/null; then
+            print_status "nvm detected - you can upgrade with:"
+            print_status "  nvm install 18 && nvm use 18"
+        elif [ -s "$HOME/.nvm/nvm.sh" ]; then
+            print_status "nvm found at $HOME/.nvm/nvm.sh - load it first:"
+            print_status "  source ~/.nvm/nvm.sh"
+            print_status "  nvm install 18 && nvm use 18"
+        elif [ -s "/usr/local/opt/nvm/nvm.sh" ]; then
+            print_status "nvm found at /usr/local/opt/nvm/nvm.sh (Homebrew) - load it first:"
+            print_status "  source /usr/local/opt/nvm/nvm.sh"
+            print_status "  nvm install 18 && nvm use 18"
+        else
+            print_status "nvm not detected - manual installation required:"
+            print_status "  Download Node.js 18+ from: https://nodejs.org/"
+        fi
+        
+        print_error "Please upgrade Node.js to 18+ and run this script again"
+        exit 1
+    else
+        print_success "Node.js version is compatible (18+)"
+    fi
+else
+    print_error "Node.js not found. Please install Node.js 18+ from https://nodejs.org/"
+    exit 1
+fi
+
+# Check npm availability
+print_status "Checking npm availability..."
+if command -v npm &> /dev/null; then
+    print_success "npm is available: $(npm --version)"
+else
+    print_error "npm not found"
+    exit 1
+fi
+
+print_success "Phase 1 complete - all prerequisites verified!"
+echo ""
+
+# PHASE 2: Drupal Setup with Dynamic URL Detection
+print_status "Phase 2: Setting up Drupal with DDEV..."
+
+# Navigate to drupal-site directory
+cd drupal-site
+
+# Start/restart DDEV with status checking
+if ddev describe &> /dev/null; then
+    print_warning "DDEV already running, restarting..."
+    ddev restart
+else
+    print_status "Starting DDEV..."
+    ddev start
+fi
+
+# Install Composer dependencies if needed
+if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
+    print_status "Installing Composer dependencies..."
+    ddev composer install
+    print_success "Composer dependencies installed"
+else
+    print_success "Composer dependencies already installed"
+fi
+
+# Check if Drupal is installed/bootstrapped
+print_status "Checking Drupal installation status..." 
+
+# Confirm Drupal site profile is installed, and if not install it.
+print_status "Checking Drupal site profile installation status..."
+
+if [ ! "$(ddev drush status --field=bootstrap 2>/dev/null)" = "Successful" ]; then
+    print_status "Installing default Drupal site profile."
+    ddev drush site:install standard -y --account-name=admin --account-pass=password --site-name="Freddie Mac OpenRisk Navigator Demo"
+fi
+
+print_status "Site profile installed!"
+
+# Install modules in proper dependency order to avoid errors
+print_status "Installing Drupal modules in proper sequence..."
+
+# Core API modules first
+ddev drush en jsonapi -y
+print_success "JSON API module enabled"
+
+ddev drush en serialization -y  
+print_success "Serialization module enabled"
+
+# OAuth dependencies
+ddev drush en key -y
+print_success "Key module enabled"
+
+ddev drush en simple_oauth -y
+print_success "Simple OAuth module enabled"
+
+# Clear cache and wait for module to fully initialize
+ddev drush cr
+print_success "Cache cleared after OAuth module enablement"
+sleep 3
+
+# Check if OpenRisk Navigator is already enabled
+print_status "Checking OpenRisk Navigator module status..."
+
+if ddev drush pm:list --status=enabled --format=string | grep -q "openrisk_navigator"; then
+    print_success "OpenRisk Navigator module already enabled"
+    SEED_COUNT=0  # Skip seeding if already installed
+else
+    # Interactive prompts for new installation
+    echo ""
+    print_status "OpenRisk Navigator module will be installed..."
+    
+    # Prompt for sample data
+    echo -n -e "${BLUE}▶${NC} Would you like to seed the site with sample Loan Record content? (y/n): "
+    read -r RESPONSE
+    
+    if [[ $RESPONSE =~ ^[Yy]$ ]]; then
+        echo -n -e "${BLUE}▶${NC} How many loan records would you like to create? (default: 5): "
+        read SEED_COUNT
+        SEED_COUNT=${SEED_COUNT:-5}  # Default to 5 if empty
+        print_status "Will create $SEED_COUNT sample loan records"
+    else
+        SEED_COUNT=0
+        print_status "Skipping sample data creation"
+    fi
+    
+    # Now install the module
+    ddev drush en openrisk_navigator -y
+    print_success "OpenRisk Navigator module enabled"
+    
+    # Generate sample data if requested
+    if [ "$SEED_COUNT" -gt 0 ]; then
+        print_status "Generating $SEED_COUNT sample loan records..."
+        
+        # More robust seeder call with debugging
+        SEEDER_RESULT=$(ddev drush php:eval "
+        \$count = $SEED_COUNT;
+        if (\Drupal::hasService('openrisk_navigator.loan_record_seeder')) {
+          \$seeder = \Drupal::service('openrisk_navigator.loan_record_seeder');
+          try {
+            \$seeder->seed(\$count);
+            print \"Created \" . \$count . \" loan records\";
+          } catch (Exception \$e) {
+            print \"Seeder error: \" . \$e->getMessage();
+          }
+        } else {
+          print 'Seeder service not available';
+        }
+        ")
+        
+        if [[ "$SEEDER_RESULT" == *"Seeder service not available"* ]]; then
+            print_warning "Seeder service not available - sample data creation skipped"
+        elif [[ "$SEEDER_RESULT" == *"Seeder error"* ]]; then
+            print_warning "Seeder error: $SEEDER_RESULT"
+        else
+            print_success "Sample data generation complete: $SEEDER_RESULT"
+        fi
+    fi
+fi
+
+# Clear cache after installation
+ddev drush cr
+print_success "Drupal cache cleared"
+
+# Verify installation success
+print_status "Verifying module installation..."
+
+if ddev drush pm:list --status=enabled --format=string | grep -q "openrisk_navigator"; then
+    print_success "OpenRisk Navigator module successfully installed and enabled"
+else
+    print_error "OpenRisk Navigator module installation failed"
+    exit 1
+fi
+
+# Get actual site URL from Drupal (reliable method)
+print_status "Detecting Drupal root URL..."
+DRUPAL_ROOT_URL=$(ddev drush php:eval 'print \Drupal::request()->getSchemeAndHttpHost();')
+
+# Test URL connectivity and determine working protocol
+test_url_connectivity() {
+    local test_url="$1"
+    if curl -s -I "$test_url" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+print_status "Testing URL connectivity..."
+if test_url_connectivity "$DRUPAL_ROOT_URL"; then
+    WORKING_URL="$DRUPAL_ROOT_URL"
+    print_success "HTTPS connectivity confirmed: $WORKING_URL"
+else
+    # Try HTTP if HTTPS fails
+    HTTP_URL="${DRUPAL_ROOT_URL/https:/http:}"
+    if test_url_connectivity "$HTTP_URL"; then
+        WORKING_URL="$HTTP_URL"
+        print_warning "HTTPS failed, using HTTP: $WORKING_URL"
+    else
+        print_error "Unable to establish connectivity to Drupal site"
+        exit 1
+    fi
+fi
+
+print_success "Phase 2 complete - Drupal setup finished!"
+echo ""
+
+# PHASE 2.5: Post-Bootstrap Configuration (AI Integration & API Setup)
+print_status "Phase 2.5: Configuring AI Integration and API Access..."
+
+# Helper function to check if API user exists
+check_api_user_exists() {
+    if ddev drush user:information api_user >/dev/null 2>&1; then
+        return 0  # User exists
+    else
+        return 1  # User doesn't exist
+    fi
+}
+
+# Helper function to check if OpenAI key exists
+check_openai_key_exists() {
+    if ddev drush config:get key.key.openai_api_key >/dev/null 2>&1; then
+        return 0  # Key exists
+    else
+        return 1  # Key doesn't exist
+    fi
+}
+
+# Helper function to check if OAuth2 consumer exists
+check_oauth2_consumer_exists() {
+    local result=$(ddev drush php:eval '
+        try {
+            $query = \Drupal::entityQuery("consumer");
+            $query->condition("client_id", "openrisk_navigator");
+            $query->accessCheck(FALSE);
+            print $query->count()->execute();
+        } catch (Exception $e) {
+            print "0";
+        }
+    ' 2>/dev/null)
+    
+    if [ "$result" = "1" ]; then
+        return 0  # Consumer exists
+    else
+        return 1  # Consumer doesn't exist
+    fi
+}
+
+# Helper function to check if AI provider is configured
+check_ai_provider_configured() {
+    if ddev drush config-get ai_provider_openai.settings >/dev/null 2>&1; then
+        return 0  # Config exists
+    else
+        return 1  # Config doesn't exist
+    fi
+}
+
+# Check and create API user
+print_status "Checking API user configuration..."
+if check_api_user_exists; then
+    print_success "API user 'api_user' already exists"
+else
+    print_status "Creating API user 'api_user'..."
+    ddev drush user:create api_user \
+        --mail="api_user@freddie-mac-demo.ddev.site" \
+        --password="password"
+    
+    print_success "API user created"
+fi
+
+# AI Integration Setup
+echo ""
+print_info "AI Integration Setup"
+print_info "The OpenRisk Navigator can use AI for automated risk analysis."
+print_info "This requires an OpenAI API key and internet connectivity."
+echo ""
+
+# Check if OpenAI is already configured
+if check_openai_key_exists && check_ai_provider_configured; then
+    print_success "OpenAI integration already configured"
+    SETUP_AI="configured"
+else
+    echo -n -e "${BLUE}▶${NC} Would you like to configure OpenAI for AI risk analysis? (y/n): "
+    read -r AI_RESPONSE
+    
+    if [[ $AI_RESPONSE =~ ^[Yy]$ ]]; then
+        SETUP_AI="yes"
+        
+        # Prompt for OpenAI API key
+        echo ""
+        print_info "You'll need an OpenAI API key from: https://platform.openai.com/api-keys"
+        echo ""
+        echo -n -e "${BLUE}▶${NC} Enter your OpenAI API key: "
+        read OPENAI_API_KEY
+        
+        if [ -z "$OPENAI_API_KEY" ]; then
+            print_warning "No API key provided - skipping AI configuration"
+            SETUP_AI="no"
+        else
+            # Validate API key format (basic check)
+            if [[ ! "$OPENAI_API_KEY" =~ ^sk-[A-Za-z0-9] ]]; then
+                print_warning "API key format looks incorrect (should start with 'sk-')"
+                print_warning "Continuing anyway - you can reconfigure later if needed"
+            fi
+        fi
+    else
+        SETUP_AI="no"
+        print_info "Skipping AI configuration - see README.md for manual setup instructions"
+    fi
+fi
+
+# Configure OpenAI if requested and not already configured
+if [ "$SETUP_AI" = "yes" ]; then
+    # Create/update OpenAI key
+    if check_openai_key_exists; then
+        print_status "Updating existing OpenAI key..."
+        ddev drush php:eval "
+            \$key = \Drupal::entityTypeManager()->getStorage('key')->load('openai_api_key');
+            if (\$key) {
+                \$key->delete();
+            }
+            \$new_key = \Drupal\key\Entity\Key::create([
+                'id' => 'openai_api_key',
+                'label' => 'OpenAI API Key for Risk Assessment',
+                'description' => 'OpenAI API Key for Risk Assessment',
+                'key_type' => 'authentication',
+                'key_provider' => 'config',
+                'key_input' => 'text_field',
+                'key_provider_settings' => [
+                    'key_value' => '$OPENAI_API_KEY'
+                ]
+            ]);
+            \$new_key->save();
+        "
+    else
+        print_status "Creating OpenAI key configuration..."
+        ddev drush php:eval "
+            \$key = \Drupal\key\Entity\Key::create([
+                'id' => 'openai_api_key',
+                'label' => 'OpenAI API Key for Risk Assessment',
+                'description' => 'OpenAI API Key for Risk Assessment',
+                'key_type' => 'authentication',
+                'key_provider' => 'config',
+                'key_input' => 'text_field',
+                'key_provider_settings' => [
+                    'key_value' => '$OPENAI_API_KEY'
+                ]
+            ]);
+            \$key->save();
+        "
+    fi
+    print_success "OpenAI key configured"
+    
+    # Configure AI provider
+    print_status "Configuring OpenAI provider..."
+    ddev drush config:set ai_provider_openai.settings api_key openai_api_key -y
+    print_success "AI provider configured"
+fi
+
+# OAuth2 Consumer Setup
+print_status "Checking OAuth2 consumer configuration..."
+if check_oauth2_consumer_exists; then
+    print_success "OAuth2 consumer 'openrisk_navigator' already exists"
+else
+    print_status "Creating OAuth2 consumer 'openrisk_navigator'..."
+    
+    # Generate a simple consumer secret
+    CONSUMER_SECRET="openrisk_demo_secret_$(date +%s)"
+    
+    ddev drush php:eval "
+        \$query = \Drupal::entityQuery('user');
+        \$query->condition('name', 'api_user');
+        \$query->accessCheck(FALSE);
+        \$uids = \$query->execute();
+        \$user_id = !empty(\$uids) ? reset(\$uids) : NULL;
+        
+        \$consumer = \Drupal\consumers\Entity\Consumer::create([
+            'client_id' => 'openrisk_navigator',
+            'label' => 'OpenRisk Navigator App',
+            'secret' => '$CONSUMER_SECRET',
+            'grant_types' => ['client_credentials'],
+            'scopes' => ['loan_record:view'],
+            'user_id' => \$user_id,
+            'is_confidential' => TRUE,
+            'access_token_expiration' => 300,
+        ]);
+        \$consumer->save();
+    "
+    print_success "OAuth2 consumer created"
+fi
+
+print_success "Phase 2.5 complete - AI integration and API access configured!"
+echo ""
+
+# Return to development directory
+cd ..
+
+# PHASE 3: React Environment Configuration
+print_status "Phase 3: Setting up React environment..."
+
+# Navigate to react-site
+cd react-site
+
+# Enhanced .env generation function
+create_react_env() {
+    local api_url="$1"
+    
+    print_status "Generating .env from template with URL: $api_url"
+    
+    # Remove existing .env if present
+    if [ -f .env ]; then
+        print_status "Removing existing .env file..."
+        rm .env
+    fi
+    
+    # Check if template exists
+    if [ ! -f .env.example ]; then
+        print_error ".env.example template not found"
+        return 1
+    fi
+    
+    # Create .env from template with URL replacement
+    sed "s|{{DRUPAL_ROOT_URL}}|$api_url|g" .env.example > .env
+    
+    # Validate .env was created correctly
+    if grep -q "{{DRUPAL_ROOT_URL}}" .env; then
+        print_error "Failed to replace template variables in .env"
+        return 1
+    fi
+    
+    print_success ".env file generated successfully"
+    return 0
+}
+
+# Generate React environment with working URL
+if ! create_react_env "$WORKING_URL"; then
+    print_error "Failed to create React environment file"
+    exit 1
+fi
+
+# Install npm dependencies if needed
+if [ ! -d "node_modules" ]; then
+    print_status "Installing npm dependencies..."
+    npm install
+    print_success "npm dependencies installed"
+else
+    print_success "npm dependencies already installed"
+fi
+
+# Return to development directory
+cd ..
+
+print_success "Phase 3 complete - React environment configured!"
+echo ""
+
+# PHASE 4: Validation & Testing
+print_status "Phase 4: Validating installation..."
+
+# Test API connectivity
+validate_api_connectivity() {
+    local base_url="$1"
+    
+    print_status "Testing API endpoints..."
+    
+    # Test basic JSON:API endpoint
+    if curl -s -I "$base_url/jsonapi" | grep -q "200 OK"; then
+        print_success "JSON:API endpoint responding"
+    else
+        print_warning "JSON:API endpoint not responding - clearing cache..."
+        cd drupal-site
+        ddev drush cr
+        cd ..
+    fi
+    
+    # Test loan records endpoint
+    print_status "Testing loan records endpoint..."
+    LOAN_TEST=$(curl -s "$base_url/jsonapi/loan_record/loan_record" 2>/dev/null)
+    if echo "$LOAN_TEST" | grep -q '"data"'; then
+        LOAN_COUNT=$(echo "$LOAN_TEST" | grep -o '"data":\[[^]]*\]' | grep -o '\[.*\]' | tr ',' '\n' | grep -c '{' 2>/dev/null || echo "0")
+        print_success "Loan records endpoint working ($LOAN_COUNT records available)"
+    else
+        print_warning "Loan records endpoint not accessible - this may be normal for a fresh install"
+    fi
+}
+
+validate_api_connectivity "$WORKING_URL"
+
+print_success "Phase 4 complete - installation validated!"
+echo ""
+
+# FINAL SUCCESS SUMMARY
+print_success "DEVELOPMENT ENVIRONMENT READY!"
+echo "============================================="
+echo ""
+print_status "ACCESS URLs:"
+print_status "   Drupal Admin: $WORKING_URL/admin"
+print_status "   OpenRisk Hub: $WORKING_URL/admin/structure/loan-record-settings" 
+print_status "   JSON API: $WORKING_URL/jsonapi/loan_record/loan_record"
+echo ""
+
+# AI Setup Status
+if [ "$SETUP_AI" = "yes" ] || [ "$SETUP_AI" = "configured" ]; then
+    print_success "AI INTEGRATION: CONFIGURED"
+    print_status "   AI Provider: $WORKING_URL/admin/config/ai/providers"
+    print_status "   Test AI by creating a new loan record - risk analysis will be generated automatically"
+else
+    print_warning "AI INTEGRATION: NOT CONFIGURED"
+    print_status "   To set up AI manually, see README.md 'AI Provider Setup' section"
+    print_status "   Or re-run this script and choose 'y' for AI configuration"
+fi
+
+echo ""
+print_status "API ACCESS CONFIGURED:"
+print_status "   OAuth2 Consumer: openrisk_navigator"
+print_status "   API User: api_user"
+print_status "   Scopes: loan_record:view"
+echo ""
+print_status "TO START REACT DEVELOPMENT:"
+print_status "   cd react-site"
+print_status "   npm run dev"
+print_status "   # Then visit: http://localhost:5173"
+echo ""
+print_status "USEFUL COMMANDS:"
+print_status "   ddev ssh          # SSH into Drupal container"
+print_status "   ddev drush status # Check Drupal status"
+print_status "   ddev drush uli    # Get admin login link"
+print_status "   ./test-dev.sh     # Validate environment"
+echo ""
+print_status "NEXT STEPS:"
+if [ "$SETUP_AI" = "yes" ] || [ "$SETUP_AI" = "configured" ]; then
+    print_status "   1. Test loan record creation with AI analysis"
+    print_status "   2. Start React development server"
+    print_status "   3. Test React-Drupal API connectivity"
+else
+    print_status "   1. Configure AI providers (optional - see README.md)"
+    print_status "   2. Start React development server"
+    print_status "   3. Test React-Drupal API connectivity"
+fi
+echo ""
+print_success "Happy coding!"

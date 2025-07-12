@@ -1,0 +1,15 @@
+parameters:
+  cors.config:
+    enabled: true
+    allowedHeaders: ['*']
+    allowedMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
+    allowedOrigins: ['http://react.localhost:8080', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:5174', 'http://127.0.0.1:3000']
+    exposedHeaders: []
+    maxAge: 1000
+    supportsCredentials: true
+
+services:
+  twig.config:
+    debug: true
+    auto_reload: true
+    cache: false

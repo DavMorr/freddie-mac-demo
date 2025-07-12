@@ -1,0 +1,80 @@
+uuid: 947bf8c3-1b4c-4d46-b4a9-e39c23fffb34
+langcode: en
+status: true
+dependencies:
+  module:
+    - openrisk_navigator
+    - text
+id: loan_record.loan_record.default
+targetEntityType: loan_record
+bundle: loan_record
+mode: default
+content:
+  borrower_name:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: 'Enter borrower name'
+    third_party_settings: {  }
+  borrower_state:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: 'e.g. CA, NY, TX, FL'
+    third_party_settings: {  }
+  defaulted:
+    type: boolean_checkbox
+    weight: 6
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  dti:
+    type: number
+    weight: 5
+    region: content
+    settings:
+      placeholder: '28'
+    third_party_settings: {  }
+  fico_score:
+    type: number
+    weight: 3
+    region: content
+    settings:
+      placeholder: '750'
+    third_party_settings: {  }
+  loan_amount:
+    type: number
+    weight: 2
+    region: content
+    settings:
+      placeholder: '250000'
+    third_party_settings: {  }
+  loan_id:
+    type: string_textfield
+    weight: 1
+    region: content
+    settings:
+      size: 30
+      placeholder: 'e.g., LN-2024-001'
+    third_party_settings: {  }
+  ltv_ratio:
+    type: number
+    weight: 4
+    region: content
+    settings:
+      placeholder: '80'
+    third_party_settings: {  }
+  risk_summary:
+    type: text_textarea
+    weight: 7
+    region: content
+    settings:
+      rows: 8
+      placeholder: 'AI-generated risk analysis will appear here...'
+    third_party_settings: {  }
+hidden: {  }
