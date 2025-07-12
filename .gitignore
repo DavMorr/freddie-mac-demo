@@ -95,7 +95,7 @@ INSTALL-*.md
 .gitignore.backup*
 
 # Module & Directory Backups
-**/openrisk_navigator.backup
+openrisk_navigator.backup/
 drupal-site-backup/
 vendor-backup/
 
